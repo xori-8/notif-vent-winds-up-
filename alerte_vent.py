@@ -25,7 +25,7 @@ def get_arome_hd_wind():
 
 def send_notification(creneaux):
     lignes = [
-        f"• {c['heure']} : {c['vent']:.1f} kts (rafales {c['rafales']:.1f} kts, dir {c['dir']}°)"
+        f"• {c['heure']} : {c['vent']:.1f} noeuds (rafales {c['rafales']:.1f} noeuds, dir {c['dir']}°)"
         for c in creneaux
     ]
     message = (
