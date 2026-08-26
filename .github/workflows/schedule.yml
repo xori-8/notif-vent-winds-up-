@@ -1,0 +1,25 @@
+name: Vérification Vent Saint-Brevin
+
+on:
+  schedule:
+    # 05:00 UTC = 07:00 en heure d'été française (CEST)
+    - cron: '0 5 * * *'
+  workflow_dispatch: # Permet de tester manuellement quand tu veux
+
+jobs:
+  check-wind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Installer les dépendances
+        run: pip install requests
+
+      - name: Lancer la vérification
+        run: python alerte_vent.py
