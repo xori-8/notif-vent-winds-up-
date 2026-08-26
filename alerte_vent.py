@@ -11,11 +11,15 @@ NTFY_TOPIC = "brevin-wind-alert-9821"
 
 
 def is_direction_favorable(deg):
-    """Vérifie si le vent est orienté entre Sud-Ouest (225°) et Nord-Ouest (315°)."""
+    """Vérifie si le vent est entre Sud-Ouest (225°) et Nord-Ouest (315°)."""
+    if deg is None:
+        return False
     return 225 <= deg <= 315
 
 
 def get_direction_label(deg):
+    if deg is None:
+        return "?"
     if 215 <= deg < 235:
         return "SO"
     if 235 <= deg < 255:
@@ -30,20 +34,24 @@ def get_direction_label(deg):
 
 
 def get_forecast():
-    """Récupère les prévisions AROME HD sur 3 jours (Aujourd'hui, Demain, J+2)."""
+    """Récupère les prévisions. On utilise AROME en priorité avec fallback sur les modèles Météo-France."""
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": LATITUDE,
         "longitude": LONGITUDE,
         "hourly": "wind_speed_10m,wind_gusts_10m,wind_direction_10m",
-        "models": "meteofrance_arome_france_hd",
+        "models": ["meteofrance_arome_france_hd", "meteofrance_seamless"],
         "wind_speed_unit": "kn",
         "timezone": "Europe/Paris",
         "forecast_days": 3,
     }
     resp = requests.get(url, params=params, timeout=10)
     resp.raise_for_status()
-    return resp.json()["hourly"]
+    data = resp.json()
+
+    # Si seamless/arome retourne les données
+    hourly = data.get("hourly", {})
+    return hourly
 
 
 def find_consecutive_sessions(day_data, min_hours=3):
@@ -52,8 +60,18 @@ def find_consecutive_sessions(day_data, min_hours=3):
     current_session = []
 
     for point in day_data:
-        speed_ok = VENT_MIN <= point["vent"] <= VENT_MAX
-        dir_ok = is_direction_favorable(point["dir"])
+        vent = point.get("vent")
+        direction = point.get("dir")
+
+        # Protection contre les valeurs nulles (NoneType)
+        if vent is None or direction is None:
+            if len(current_session) >= min_hours:
+                sessions.append(current_session)
+            current_session = []
+            continue
+
+        speed_ok = VENT_MIN <= vent <= VENT_MAX
+        dir_ok = is_direction_favorable(direction)
 
         if speed_ok and dir_ok:
             current_session.append(point)
@@ -74,15 +92,15 @@ def send_notification(title, sessions):
         h_start = session[0]["heure"]
         h_end = session[-1]["heure"]
         avg_speed = sum(p["vent"] for p in session) / len(session)
-        max_gust = max(p["rafales"] for p in session)
+        valid_gusts = [p["rafales"] for p in session if p["rafales"] is not None]
+        max_gust = max(valid_gusts) if valid_gusts else avg_speed
         avg_dir = sum(p["dir"] for p in session) / len(session)
         dir_label = get_direction_label(avg_dir)
 
         message_lines.append(
-            f"🌊 Créneau {h_start} - {h_end} ({len(session)}h):\n"
-            f"   • Vent moy : {avg_speed:.1f} kts\n"
-            f"   • Max rafales : {max_gust:.1f} kts\n"
-            f"   • Orientation : {dir_label} ({avg_dir:.0f}°)"
+            f"🌊 {h_start} à {h_end} ({len(session)}h):\n"
+            f"   • Vent : {avg_speed:.1f} kts (rafales {max_gust:.1f} kts)\n"
+            f"   • Dir : {dir_label} ({avg_dir:.0f}°)"
         )
 
     full_message = "\n\n".join(message_lines)
@@ -102,14 +120,20 @@ def send_notification(title, sessions):
 def check_all():
     data = get_forecast()
 
-    # Organise les prévisions par date (YYYY-MM-DD)
+    # Récupération sécurisée des listes de clés
+    times = data.get("time", [])
+   
+    # L'API peut nommer la clé avec le nom du modèle ou en standard
+    wind_keys = [k for k in data.keys() if k.startswith("wind_speed_10m")]
+    gust_keys = [k for k in data.keys() if k.startswith("wind_gusts_10m")]
+    dir_keys = [k for k in data.keys() if k.startswith("wind_direction_10m")]
+
+    wind_speeds = data[wind_keys[0]] if wind_keys else []
+    gusts = data[gust_keys[0]] if gust_keys else [None] * len(times)
+    directions = data[dir_keys[0]] if dir_keys else [None] * len(times)
+
     days_data = {}
-    for t, vent, rafales, direct in zip(
-        data["time"],
-        data["wind_speed_10m"],
-        data["wind_gusts_10m"],
-        data["wind_direction_10m"],
-    ):
+    for t, vent, rafales, direct in zip(times, wind_speeds, gusts, directions):
         date_str, heure = t.split("T")
         if date_str not in days_data:
             days_data[date_str] = []
@@ -118,13 +142,17 @@ def check_all():
         )
 
     dates_sorted = sorted(list(days_data.keys()))
+    if not dates_sorted:
+        print("[INFO] Aucune donnée météo retournée.")
+        return
+
     today_str = dates_sorted[0]
     j_plus_2_str = dates_sorted[2] if len(dates_sorted) >= 3 else None
 
-    # 1. Vérification pour AUJOURD'HUI (Matin même)
+    # 1. Vérification pour AUJOURD'HUI
     today_sessions = find_consecutive_sessions(days_data[today_str])
     if today_sessions:
-        print(f"[OK] Session(s) trouvée(s) pour aujourd'hui ({today_str})")
+        print(f"[OK] Session trouvée pour aujourd'hui ({today_str})")
         send_notification("🔥 Session AUJOURD'HUI à Saint-Brevin !", today_sessions)
     else:
         print(f"[INFO] Aucune session de 3h continue aujourd'hui ({today_str}).")
@@ -134,7 +162,7 @@ def check_all():
         j2_sessions = find_consecutive_sessions(days_data[j_plus_2_str])
         if j2_sessions:
             date_formatted = datetime.strptime(j_plus_2_str, "%Y-%m-%d").strftime("%d/%m")
-            print(f"[OK] Session(s) trouvée(s) pour J+2 ({date_formatted})")
+            print(f"[OK] Session trouvée pour J+2 ({date_formatted})")
             send_notification(f"📅 Session prévue dans 2 jours ({date_formatted})", j2_sessions)
         else:
             print(f"[INFO] Aucune session de 3h continue pour J+2 ({j_plus_2_str}).")
