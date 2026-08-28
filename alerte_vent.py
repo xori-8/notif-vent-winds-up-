@@ -148,6 +148,7 @@ def check_all():
 
     today_str = dates_sorted[0]
     j_plus_2_str = dates_sorted[2] if len(dates_sorted) >= 3 else None
+    j_plus_1_str = dates_sorted[1] if len(dates_sorted) >= 3 else None
 
     # 1. Vérification pour AUJOURD'HUI
     today_sessions = find_consecutive_sessions(days_data[today_str])
@@ -156,8 +157,18 @@ def check_all():
         send_notification("🔥 Session AUJOURD'HUI à Saint-Brevin !", today_sessions)
     else:
         print(f"[INFO] Aucune session de 3h continue aujourd'hui ({today_str}).")
-
-    # 2. Vérification pour DANS 2 JOURS (J+2)
+        
+    # 2. Vérification pour DANS 1 JOURS (J+2)
+    if j_plus_1_str and j_plus_1_str in days_data:
+        j1_sessions = find_consecutive_sessions(days_data[j_plus_1_str])
+        if j1_sessions:
+            date_formatted = datetime.strptime(j_plus_1_str, "%Y-%m-%d").strftime("%d/%m")
+            print(f"[OK] Session trouvée pour J+1 ({date_formatted})")
+            send_notification(f"📅 Session prévue dans 1 jours ({date_formatted})", j1_sessions)
+        else:
+            print(f"[INFO] Aucune session de 3h continue pour J+1 ({j_plus_2_str}).")
+            
+    # 3. Vérification pour DANS 2 JOURS (J+2)
     if j_plus_2_str and j_plus_2_str in days_data:
         j2_sessions = find_consecutive_sessions(days_data[j_plus_2_str])
         if j2_sessions:
