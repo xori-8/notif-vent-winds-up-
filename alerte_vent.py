@@ -164,7 +164,7 @@ if heure_de_debut <= heure_actuelle <= heure_de_fin:
         print(f"[INFO] Aucune session de 3h continue aujourd'hui ({today_str}).")
         
     # 2. Vérification pour DANS 1 JOURS (J+2)
-    if j_plus_1_str and j_plus_1_str in days_data and :
+    if j_plus_1_str and j_plus_1_str in days_data :
         j1_sessions = find_consecutive_sessions(days_data[j_plus_1_str])
         if j1_sessions:
             date_formatted = datetime.strptime(j_plus_1_str, "%Y-%m-%d").strftime("%d/%m")
