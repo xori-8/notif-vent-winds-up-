@@ -177,7 +177,7 @@ def check_all():
             send_notification(f"📅 Session prévue dans 2 jours ({date_formatted})", j2_sessions)
         else:
             print(f"[INFO] Aucune session de 3h continue pour J+2 ({j_plus_2_str}).")
-            send_notification(f"📅 Aucune session de trouver dans les deux prochain jour)
+            #send_notification(f"📅 Aucune session de trouver dans les deux prochain jour)
 
 
 if __name__ == "__main__":
