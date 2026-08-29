@@ -109,11 +109,12 @@ def send_notification(title, sessions):
     requests.post(
         f"https://ntfy.sh/{NTFY_TOPIC}",
         data=full_message.encode("utf-8"),
-        headers={},
+        headers={,
             "Title": title.encode("utf-8"),
             "Priority": "high",
             "Tags": "surfer,wind_blowing",
         timeout=10,)
+    },
     
 
 
@@ -131,11 +132,11 @@ def check_all():
     gusts = data[gust_keys[0]] if gust_keys else [None] * len(times)
     directions = data[dir_keys[0]] if dir_keys else [None] * len(times)
 
-    days_data = {
+    days_data = {}
     for t, vent, rafales, direct in zip(times, wind_speeds, gusts, directions):
         date_str, heure = t.split("T")
         if date_str not in days_data:
-            days_data[date_str] = []}
+            days_data[date_str] = []
         days_data[date_str].append(
             {"heure": heure, "vent": vent, "rafales": rafales, "dir": direct})
         
@@ -154,7 +155,7 @@ def check_all():
     heure_de_debut = time (9, 0)
     heure_de_fin = time (19, 30)
     
-if heure_de_debut <= heure_actuelle <= heure_de_fin:
+    if heure_de_debut <= heure_actuelle <= heure_de_fin:
     # 1. Vérification pour AUJOURD'HUI
     today_sessions = find_consecutive_sessions(days_data[today_str])
     if today_sessions:
