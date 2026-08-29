@@ -89,11 +89,17 @@ def find_consecutive_sessions(day_data, min_hours=3):
 
 def send_notification(title, sessions):
     message_lines = []
+
     for session in sessions:
         h_start = session[0]["heure"]
         h_end = session[-1]["heure"]
         avg_speed = sum(p["vent"] for p in session) / len(session)
-        valid_gusts = [p["rafales"] for p in session if p["rafales"] is not None]
+
+        valid_gusts = [
+            p["rafales"] for p in session
+            if p["rafales"] is not None
+        ]
+
         max_gust = max(valid_gusts) if valid_gusts else avg_speed
         avg_dir = sum(p["dir"] for p in session) / len(session)
         dir_label = get_direction_label(avg_dir)
@@ -101,24 +107,21 @@ def send_notification(title, sessions):
         message_lines.append(
             f"🌊 {h_start} à {h_end} ({len(session)}h):\n"
             f"   • Vent : {avg_speed:.1f} kts (rafales {max_gust:.1f} kts)\n"
-            f"   • Dir : {dir_label} ({avg_dir:.0f}°)")
-        
+            f"   • Dir : {dir_label} ({avg_dir:.0f}°)"
+        )
 
     full_message = "\n\n".join(message_lines)
 
     requests.post(
         f"https://ntfy.sh/{NTFY_TOPIC}",
         data=full_message.encode("utf-8"),
-       requests.post(
-    f"https://ntfy.sh/{NTFY_TOPIC}",
-    data=full_message.encode("utf-8"),
-    headers={
-        "Title": title,
-        "Priority": "high",
-        "Tags": "surfer,wind_blowing",
-    },
-    timeout=10,
-)
+        headers={
+            "Title": title,
+            "Priority": "high",
+            "Tags": "surfer,wind_blowing",
+        },
+        timeout=10,
+    )
     
 def check_all():
     data = get_forecast()
