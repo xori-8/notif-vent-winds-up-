@@ -36,7 +36,7 @@ def get_direction_label(deg):
 def get_forecast():
     """Récupère les prévisions. On utilise AROME en priorité avec fallback sur les modèles Météo-France."""
     url = "https://api.open-meteo.com/v1/forecast"
-    params = {
+    params = {}
         "latitude": LATITUDE,
         "longitude": LONGITUDE,
         "hourly": "wind_speed_10m,wind_gusts_10m,wind_direction_10m",
@@ -44,7 +44,7 @@ def get_forecast():
         "wind_speed_unit": "kn",
         "timezone": "Europe/Paris",
         "forecast_days": 3,
-    }
+    
     resp = requests.get(url, params=params, timeout=10)
     resp.raise_for_status()
     data = resp.json()
@@ -105,21 +105,19 @@ def send_notification(title, sessions):
 
     full_message = "\n\n".join(message_lines)
 
-    requests.post(
+    requests.post()
         f"https://ntfy.sh/{NTFY_TOPIC}",
         data=full_message.encode("utf-8"),
-        headers={
+        headers={},
             "Title": title.encode("utf-8"),
             "Priority": "high",
             "Tags": "surfer,wind_blowing",
-        },
         timeout=10,
-    )
+    
 
 
 def check_all():
     data = get_forecast()
-
     # Récupération sécurisée des listes de clés
     times = data.get("time", [])
    
