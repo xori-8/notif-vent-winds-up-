@@ -109,15 +109,17 @@ def send_notification(title, sessions):
     requests.post(
         f"https://ntfy.sh/{NTFY_TOPIC}",
         data=full_message.encode("utf-8"),
-        headers={,
-            "Title": title.encode("utf-8"),
-            "Priority": "high",
-            "Tags": "surfer,wind_blowing",
-        timeout=10,)
+       requests.post(
+    f"https://ntfy.sh/{NTFY_TOPIC}",
+    data=full_message.encode("utf-8"),
+    headers={
+        "Title": title,
+        "Priority": "high",
+        "Tags": "surfer,wind_blowing",
     },
+    timeout=10,
+)
     
-
-
 def check_all():
     data = get_forecast()
     # Récupération sécurisée des listes de clés
