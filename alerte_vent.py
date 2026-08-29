@@ -97,11 +97,11 @@ def send_notification(title, sessions):
         avg_dir = sum(p["dir"] for p in session) / len(session)
         dir_label = get_direction_label(avg_dir)
 
-        message_lines.append(
+        message_lines.append()
             f"🌊 {h_start} à {h_end} ({len(session)}h):\n"
             f"   • Vent : {avg_speed:.1f} kts (rafales {max_gust:.1f} kts)\n"
             f"   • Dir : {dir_label} ({avg_dir:.0f}°)"
-        )
+        
 
     full_message = "\n\n".join(message_lines)
 
@@ -137,9 +137,9 @@ def check_all():
         date_str, heure = t.split("T")
         if date_str not in days_data:
             days_data[date_str] = []
-        days_data[date_str].append(
+        days_data[date_str].append()
             {"heure": heure, "vent": vent, "rafales": rafales, "dir": direct}
-        )
+        
 
     dates_sorted = sorted(list(days_data.keys()))
     if not dates_sorted:
