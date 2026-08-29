@@ -153,34 +153,34 @@ def check_all():
     heure_de_debut = time (9, 0)
     heure_de_fin = time (19, 30)
     
-    if heure_de_debut <= heure_actuelle <= heure_de_fin:
-        # 1. Vérification pour AUJOURD'HUI
-        today_sessions = find_consecutive_sessions(days_data[today_str])
-        if today_sessions:
-            print(f"[OK] Session trouvée pour aujourd'hui ({today_str})")
-            send_notification("🔥 Session AUJOURD'HUI à Saint-Brevin !", today_sessions)
+if heure_de_debut <= heure_actuelle <= heure_de_fin:
+    # 1. Vérification pour AUJOURD'HUI
+    today_sessions = find_consecutive_sessions(days_data[today_str])
+    if today_sessions:
+        print(f"[OK] Session trouvée pour aujourd'hui ({today_str})")
+        send_notification("🔥 Session AUJOURD'HUI à Saint-Brevin !", today_sessions)
+    else:
+        print(f"[INFO] Aucune session de 3h continue aujourd'hui ({today_str}).")
+        
+    # 2. Vérification pour DANS 1 JOURS (J+2)
+    if j_plus_1_str and j_plus_1_str in days_data and ti:
+        j1_sessions = find_consecutive_sessions(days_data[j_plus_1_str])
+        if j1_sessions:
+            date_formatted = datetime.strptime(j_plus_1_str, "%Y-%m-%d").strftime("%d/%m")
+            print(f"[OK] Session trouvée pour J+1 ({date_formatted})")
+            send_notification(f"📅 Session prévue dans 1 jours ({date_formatted})", j1_sessions
         else:
-            print(f"[INFO] Aucune session de 3h continue aujourd'hui ({today_str}).")
+            print(f"[INFO] Aucune session de 3h continue pour J+1 ({j_plus_2_str}).")
             
-        # 2. Vérification pour DANS 1 JOURS (J+2)
-        if j_plus_1_str and j_plus_1_str in days_data and ti:
-            j1_sessions = find_consecutive_sessions(days_data[j_plus_1_str])
-            if j1_sessions:
-                date_formatted = datetime.strptime(j_plus_1_str, "%Y-%m-%d").strftime("%d/%m")
-                print(f"[OK] Session trouvée pour J+1 ({date_formatted})")
-                send_notification(f"📅 Session prévue dans 1 jours ({date_formatted})", j1_sessions
-            else:
-                print(f"[INFO] Aucune session de 3h continue pour J+1 ({j_plus_2_str}).")
-                
-        # 3. Vérification pour DANS 2 JOURS (J+2)
-        if j_plus_2_str and j_plus_2_str in days_data:
-            j2_sessions = find_consecutive_sessions(days_data[j_plus_2_str])
-            if j2_sessions:
-                date_formatted = datetime.strptime(j_plus_2_str, "%Y-%m-%d").strftime("%d/%m")
-                print(f"[OK] Session trouvée pour J+2 ({date_formatted})")
-                send_notification(f"📅 Session prévue dans 2 jours ({date_formatted})", j2_sessions)
-            else:
-                print(f"[INFO] Aucune session de 3h continue pour J+2 ({j_plus_2_str}).")
+    # 3. Vérification pour DANS 2 JOURS (J+2)
+    if j_plus_2_str and j_plus_2_str in days_data:
+        j2_sessions = find_consecutive_sessions(days_data[j_plus_2_str])
+        if j2_sessions:
+            date_formatted = datetime.strptime(j_plus_2_str, "%Y-%m-%d").strftime("%d/%m")
+            print(f"[OK] Session trouvée pour J+2 ({date_formatted})")
+            send_notification(f"📅 Session prévue dans 2 jours ({date_formatted})", j2_sessions)
+        else:
+            print(f"[INFO] Aucune session de 3h continue pour J+2 ({j_plus_2_str}).")
 
 
 if __name__ == "__main__":
